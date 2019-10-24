@@ -22,9 +22,9 @@ echo "Database = ${Database}"
 
 if [ `id -u` -ne 0 ] ; then echo "Please run as root" ; exit 1 ; fi
 
-if [ -x "$(command -v apt-get)" ]; then apt-get install install zip unzip; fi
+if [ -x "$(command -v apt-get)" ]; then apt-get install unzip; fi
 
-if [ -x "$(command -v yum)" ]; then sudo yum install zip unzip ; fi
+if [ -x "$(command -v yum)" ]; then sudo yum install unzip ; fi
 
 wget https://github.com/kittichai14341/Prometheus-exporter/raw/master/prometheus-exporter.zip -O /tmp/prometheus-exporter.zip
 
@@ -40,13 +40,13 @@ sudo mv /tmp/node_exporter /usr/local/bin/
 sudo mv /tmp/mysqld_exporter /usr/local/bin/
 
 if [[ ! -e /usr/local/bin/node_exporter ]] ; then echo "Fail to move node_exporter" ; exit 1 ; fi
-if [[ ! -e /usr/local/bin/mysqld_exporter ]] ; then echo "Fail to move node_exporter" ; exit 1 ; fi
+if [[ ! -e /usr/local/bin/mysqld_exporter ]] ; then echo "Fail to move mysqld_exporter" ; exit 1 ; fi
 
 sudo useradd -rs /bin/false node_exporter
-# sudo useradd mysqld_exporter
+sudo useradd mysqld_exporter
 
 if [[ `compgen -u node_exporter` != "node_exporter" ]] ; then echo "Fail to add user [node_exporter]" ; exit 1 ; fi
-# if [[ `compgen -u mysqld_exporter` != "mysqld_exporter" ]] ; then echo "Fail to add user [mysqld_exporter]" ; exit 1 ; fi
+if [[ `compgen -u mysqld_exporter` != "mysqld_exporter" ]] ; then echo "Fail to add user [mysqld_exporter]" ; exit 1 ; fi
 
 echo "
 [Unit]
