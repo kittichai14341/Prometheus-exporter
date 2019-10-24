@@ -22,7 +22,7 @@ if [ -x "$(command -v apt-get)" ]; then apt-get install install zip unzip; fi
 
 if [ -x "$(command -v yum)" ]; then sudo yum install zip unzip ; fi
 
-wget http://monitor.ithesis.co:8000/prometheus-exporter.zip -O /tmp/prometheus-exporter.zip
+wget https://github.com/kittichai14341/Prometheus-exporter/raw/master/prometheus-exporter.zip -O /tmp/prometheus-exporter.zip
 
 if [[ ! -e /tmp/prometheus-exporter.zip ]] ; then echo "Fail to download prometheus-exporter.zip" ; exit 1 ; fi
 
