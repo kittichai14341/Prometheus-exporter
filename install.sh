@@ -1,5 +1,5 @@
 #!/bin/bash
-while getopts ":U:P:h:p:d::" options; do
+while getopts ":U:P:h:p::d::" options; do
     case "${options}" in
         U) Username=${OPTARG} ;;
         P) Password=${OPTARG} ;;
@@ -10,13 +10,17 @@ while getopts ":U:P:h:p:d::" options; do
     esac
 done
 
+if [ "${Port}" = "" ] ; then Port=3306 ; fi
+
+if [ "${Database}" = "" ] ; then Database=information_schema ; fi
+
 echo "Username = ${Username}"
 echo "Password = ${Password}"
 echo "Host = ${Host}"
 echo "Port = ${Port}"
 echo "Database = ${Database}"
 
-if [[ `id -u` -ne 0 ]] ; then echo "Please run as root" ; exit 1 ; fi
+if [ `id -u` -ne 0 ] ; then echo "Please run as root" ; exit 1 ; fi
 
 if [ -x "$(command -v apt-get)" ]; then apt-get install install zip unzip; fi
 
@@ -30,16 +34,18 @@ cd /tmp/
 
 unzip prometheus-exporter.zip
 
+chmod 0777 /tmp/node_exporter /tmp/mysqld_exporter
+
 sudo mv /tmp/node_exporter /usr/local/bin/
 sudo mv /tmp/mysqld_exporter /usr/local/bin/
 
 if [[ ! -e /usr/local/bin/node_exporter ]] ; then echo "Fail to move node_exporter" ; exit 1 ; fi
 if [[ ! -e /usr/local/bin/mysqld_exporter ]] ; then echo "Fail to move node_exporter" ; exit 1 ; fi
 
-# sudo useradd -rs /bin/false node_exporter
+sudo useradd -rs /bin/false node_exporter
 # sudo useradd mysqld_exporter
 
-# if [[ `compgen -u node_exporter` != "node_exporter" ]] ; then echo "Fail to add user [node_exporter]" ; exit 1 ; fi
+if [[ `compgen -u node_exporter` != "node_exporter" ]] ; then echo "Fail to add user [node_exporter]" ; exit 1 ; fi
 # if [[ `compgen -u mysqld_exporter` != "mysqld_exporter" ]] ; then echo "Fail to add user [mysqld_exporter]" ; exit 1 ; fi
 
 echo "
@@ -64,7 +70,7 @@ User=mysqld_exporter
 Group=mysqld_exporter
 Environment=\"DATA_SOURCE_NAME=${Username}:${Password}@(${Host}:${Port})/${Database}\"
 Type=simple
-ExecStart=/usr/bin/mysqld_exporter
+ExecStart=/usr/local/bin/mysqld_exporter
 Restart=always
 [Install]
 WantedBy=multi-user.target" > /etc/systemd/system/mysqld_exporter.service
