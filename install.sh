@@ -6,9 +6,11 @@ while getopts ":U:P:h:p::d::" options; do
         h) Host=${OPTARG} ;;
         p) Port=${OPTARG} ;;
         d) Database=${OPTARG} ;;
-        *) echo "Invalid option: -$opt" ;;
+        *) echo "Invalid option: -${options}" ;;
     esac
 done
+
+if [ "${Host}" = "" ] ; then Host=127.0.0.1 ; fi
 
 if [ "${Port}" = "" ] ; then Port=3306 ; fi
 
@@ -22,13 +24,24 @@ echo "Database = ${Database}"
 
 if [ `id -u` -ne 0 ] ; then echo "Please run as root" ; exit 1 ; fi
 
-if [ -x "$(command -v apt-get)" ]; then apt-get install unzip; fi
+if [ -x "$(command -v apt-get)" ]; then 
+    if ! dpkg -l | grep -qw unzip ; then
+    apt-get install unzip
+    fi
+fi
 
-if [ -x "$(command -v yum)" ]; then sudo yum install unzip ; fi
+if [ -x "$(command -v yum)" ]; then 
+    if ! rpm -qa | grep -qw unzip ; then
+        yum install unzip
+    fi
+fi
 
 wget https://github.com/kittichai14341/Prometheus-exporter/raw/master/prometheus-exporter.zip -O /tmp/prometheus-exporter.zip
 
-if [[ ! -e /tmp/prometheus-exporter.zip ]] ; then echo "Fail to download prometheus-exporter.zip" ; exit 1 ; fi
+if [ ! -e /tmp/prometheus-exporter.zip ] ; then 
+    echo "Fail to download prometheus-exporter.zip"
+    exit 1 ; 
+fi
 
 cd /tmp/
 
@@ -39,35 +52,23 @@ chmod 0777 /tmp/node_exporter /tmp/mysqld_exporter
 sudo mv /tmp/node_exporter /usr/local/bin/
 sudo mv /tmp/mysqld_exporter /usr/local/bin/
 
-if [[ ! -e /usr/local/bin/node_exporter ]] ; then echo "Fail to move node_exporter" ; exit 1 ; fi
-if [[ ! -e /usr/local/bin/mysqld_exporter ]] ; then echo "Fail to move mysqld_exporter" ; exit 1 ; fi
+if [ ! -e /usr/local/bin/node_exporter ] ; then echo "Fail to move node_exporter" ; exit 1 ; fi
+if [ ! -e /usr/local/bin/mysqld_exporter ] ; then echo "Fail to move mysqld_exporter" ; exit 1 ; fi
 
-sudo useradd -rs /bin/false node_exporter
-sudo useradd mysqld_exporter
-
-if [[ `compgen -u node_exporter` != "node_exporter" ]] ; then echo "Fail to add user [node_exporter]" ; exit 1 ; fi
-if [[ `compgen -u mysqld_exporter` != "mysqld_exporter" ]] ; then echo "Fail to add user [mysqld_exporter]" ; exit 1 ; fi
-
-echo "
-[Unit]
+echo "[Unit]
 Description=Node Exporter
 After=network.target
 [Service]
-User=node_exporter
-Group=node_exporter
 Type=simple
 ExecStart=/usr/local/bin/node_exporter
 [Install]
 WantedBy=multi-user.target" > /etc/systemd/system/node_exporter.service
 
-echo "
-[Unit]
+echo "[Unit]
 Description=MySQL Exporter Service
 Wants=network.target
 After=network.target
 [Service]
-User=mysqld_exporter
-Group=mysqld_exporter
 Environment=\"DATA_SOURCE_NAME=${Username}:${Password}@(${Host}:${Port})/${Database}\"
 Type=simple
 ExecStart=/usr/local/bin/mysqld_exporter
