@@ -6,11 +6,10 @@ while getopts ":U:P:h:p::d::" options; do
         h) Host=${OPTARG} ;;
         p) Port=${OPTARG} ;;
         d) Database=${OPTARG} ;;
-        *) echo "Invalid option: -${options}" ;;
+        I) Ipdocker=${OPTARG}
+        *) echo "Invalid option: -$opt" ;;
     esac
 done
-
-if [ "${Host}" = "" ] ; then Host=127.0.0.1 ; fi
 
 if [ "${Port}" = "" ] ; then Port=3306 ; fi
 
@@ -21,60 +20,87 @@ echo "Password = ${Password}"
 echo "Host = ${Host}"
 echo "Port = ${Port}"
 echo "Database = ${Database}"
+echo "Ipdocker = ${Ipdocker}"
 
 if [ `id -u` -ne 0 ] ; then echo "Please run as root" ; exit 1 ; fi
 
-if [ -x "$(command -v apt-get)" ]; then 
-    if ! dpkg -l | grep -qw unzip ; then
-    apt-get install unzip
-    fi
-fi
+if [ -x "$(command -v apt-get)" ]; then apt-get install unzip jq ; fi
 
-if [ -x "$(command -v yum)" ]; then 
-    if ! rpm -qa | grep -qw unzip ; then
-        yum install unzip
-    fi
-fi
+if [ -x "$(command -v yum)" ]; then sudo yum install unzip xinetd redhat-lsb-core nmap jq ; fi
 
 wget https://github.com/kittichai14341/Prometheus-exporter/raw/master/prometheus-exporter.zip -O /tmp/prometheus-exporter.zip
 
-if [ ! -e /tmp/prometheus-exporter.zip ] ; then 
-    echo "Fail to download prometheus-exporter.zip"
-    exit 1 ; 
-fi
+if [[ ! -e /tmp/prometheus-exporter.zip ]] ; then echo "Fail to download prometheus-exporter.zip" ; exit 1 ; fi
 
 cd /tmp/
 
 unzip prometheus-exporter.zip
+mkdir -p /opt/metrics.d/
 
 chmod 0777 /tmp/node_exporter /tmp/mysqld_exporter
 
 sudo mv /tmp/node_exporter /usr/local/bin/
 sudo mv /tmp/mysqld_exporter /usr/local/bin/
+sudo mv /tmp/loadscript /opt/metrics.d/loadscript
+sudo mv /tmp/httpwrapper /opt/metrics.d/httpwrapper 
 
-if [ ! -e /usr/local/bin/node_exporter ] ; then echo "Fail to move node_exporter" ; exit 1 ; fi
-if [ ! -e /usr/local/bin/mysqld_exporter ] ; then echo "Fail to move mysqld_exporter" ; exit 1 ; fi
+chmod +x /opt/metrics.d/*
 
-echo "[Unit]
+if [[ ! -e /usr/local/bin/node_exporter ]] ; then echo "Fail to move node_exporter" ; exit 1 ; fi
+if [[ ! -e /usr/local/bin/mysqld_exporter ]] ; then echo "Fail to move mysqld_exporter" ; exit 1 ; fi
+
+sudo useradd -rs /bin/false node_exporter
+sudo useradd mysqld_exporter
+
+if [[ `compgen -u node_exporter` != "node_exporter" ]] ; then echo "Fail to add user [node_exporter]" ; exit 1 ; fi
+if [[ `compgen -u mysqld_exporter` != "mysqld_exporter" ]] ; then echo "Fail to add user [mysqld_exporter]" ; exit 1 ; fi
+
+echo "
+[Unit]
 Description=Node Exporter
 After=network.target
 [Service]
+User=node_exporter
+Group=node_exporter
 Type=simple
 ExecStart=/usr/local/bin/node_exporter
 [Install]
 WantedBy=multi-user.target" > /etc/systemd/system/node_exporter.service
 
-echo "[Unit]
+echo "
+[Unit]
 Description=MySQL Exporter Service
 Wants=network.target
 After=network.target
 [Service]
+User=mysqld_exporter
+Group=mysqld_exporter
 Environment=\"DATA_SOURCE_NAME=${Username}:${Password}@(${Host}:${Port})/${Database}\"
 Type=simple
 ExecStart=/usr/local/bin/mysqld_exporter
 Restart=always
 [Install]
 WantedBy=multi-user.target" > /etc/systemd/system/mysqld_exporter.service
+
+echo "
+service loadscript
+{
+  type = unlisted
+  port = 9200
+  socket_type = stream
+  wait = no
+  user = root
+  server = /opt/metrics.d/httpwrapper
+  server_args = loadscript
+  disable = no
+  only_from = ${IPdocker}
+  log_type = FILE /dev/null
+}" > /etc/xinetd.d/xinetd-service-file
+
+
+if [ -x "$(command -v apt-get)" ]; then /etc/init.d/xinetd restart ; fi
+
+if [ -x "$(command -v yum)" ]; then sudo service xinetd start ; fi
 
 sudo systemctl daemon-reload
 sudo systemctl start node_exporter mysqld_exporter
