@@ -97,7 +97,6 @@ service loadscript
   log_type = FILE /dev/null
 }" > /etc/xinetd.d/xinetd-service-file
 
-
 if [ -x "$(command -v apt-get)" ]; then /etc/init.d/xinetd restart ; fi
 
 if [ -x "$(command -v yum)" ]; then sudo service xinetd start ; fi
