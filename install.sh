@@ -6,7 +6,7 @@ while getopts ":U:P:h:p::d::I:" options; do
         h) Host=${OPTARG} ;;
         p) Port=${OPTARG} ;;
         d) Database=${OPTARG} ;;
-        I) Ipdocker=${OPTARG}
+        I) Ipdocker=${OPTARG} ;;
         *) echo "Invalid option: -$opt" ;;
     esac
 done
