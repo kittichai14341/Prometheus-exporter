@@ -1,5 +1,5 @@
 #!/bin/bash
-while getopts ":U:P:h:p::d::" options; do
+while getopts ":U:P:h:p::d::I:" options; do
     case "${options}" in
         U) Username=${OPTARG} ;;
         P) Password=${OPTARG} ;;
