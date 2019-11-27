@@ -93,7 +93,7 @@ service loadscript
   server = /opt/metrics.d/httpwrapper
   server_args = loadscript
   disable = no
-  only_from = ${IPdocker}
+  only_from = ${Ipdocker}
   log_type = FILE /dev/null
 }" > /etc/xinetd.d/xinetd-service-file
 
