@@ -99,9 +99,9 @@ service loadscript
 
 if [ -x "$(command -v apt-get)" ]; then /etc/init.d/xinetd restart ; fi
 
-if [ -x "$(command -v yum)" ]; then sudo service xinetd start ; fi
+if [ -x "$(command -v yum)" ]; then sudo service xinetd restart ; fi
 
 sudo systemctl daemon-reload
-sudo systemctl start node_exporter mysqld_exporter
-sudo systemctl status node_exporter mysqld_exporter
+sudo systemctl restart node_exporter mysqld_exporter xinetd
+sudo systemctl status node_exporter mysqld_exporter xinetd
 sudo systemctl enable node_exporter mysqld_exporter
