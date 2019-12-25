@@ -49,12 +49,6 @@ chmod +x /opt/metrics.d/*
 if [[ ! -e /usr/local/bin/node_exporter ]] ; then echo "Fail to move node_exporter" ; exit 1 ; fi
 if [[ ! -e /usr/local/bin/mysqld_exporter ]] ; then echo "Fail to move mysqld_exporter" ; exit 1 ; fi
 
-sudo useradd -rs /bin/false node_exporter
-sudo useradd mysqld_exporter
-
-if [[ `compgen -u node_exporter` != "node_exporter" ]] ; then echo "Fail to add user [node_exporter]" ; exit 1 ; fi
-if [[ `compgen -u mysqld_exporter` != "mysqld_exporter" ]] ; then echo "Fail to add user [mysqld_exporter]" ; exit 1 ; fi
-
 echo "
 [Unit]
 Description=Node Exporter
