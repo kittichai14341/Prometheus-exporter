@@ -60,8 +60,6 @@ echo "
 Description=Node Exporter
 After=network.target
 [Service]
-User=node_exporter
-Group=node_exporter
 Type=simple
 ExecStart=/usr/local/bin/node_exporter
 [Install]
@@ -73,8 +71,6 @@ Description=MySQL Exporter Service
 Wants=network.target
 After=network.target
 [Service]
-User=mysqld_exporter
-Group=mysqld_exporter
 Environment=\"DATA_SOURCE_NAME=${Username}:${Password}@(${Host}:${Port})/${Database}\"
 Type=simple
 ExecStart=/usr/local/bin/mysqld_exporter
