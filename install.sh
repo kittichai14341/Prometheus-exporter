@@ -24,7 +24,7 @@ echo "Ipdocker = ${Ipdocker}"
 
 if [ `id -u` -ne 0 ] ; then echo "Please run as root" ; exit 1 ; fi
 
-if [ -x "$(command -v apt-get)" ]; then apt-get -y install xinetd unzip  jq ; fi
+if [ -x "$(command -v apt-get)" ]; then apt-get -y install lsb-core xinetd unzip jq ; fi
 
 if [ -x "$(command -v yum)" ]; then sudo yum -y install unzip xinetd redhat-lsb-core nmap epel-release jq ; fi
 
